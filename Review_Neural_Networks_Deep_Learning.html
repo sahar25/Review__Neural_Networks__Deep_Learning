@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review: Neural Networks &amp; Deep Learning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --p:#4A3FE0; --p-dk:#2E2790; --sec:#EDEBFF; --acc:#FF6B5B;
+    --ink:#1D1B33; --mute:#6B6885; --ok:#3FA66A; --ok-bg:#E8F7EE;
+    --bad:#E5484D; --bad-bg:#FDECEC; --card:#FFFFFF; --bg:#F7F6FF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    padding:32px 16px 64px;
+  }
+  .topbar{
+    width:100%; max-width:720px; display:flex; flex-direction:column; gap:14px; margin-bottom:28px;
+  }
+  h1{
+    font-family:'Source Serif 4',Georgia,serif; font-size:clamp(26px,4vw,34px);
+    font-weight:700; margin:0; color:var(--p-dk); line-height:1.15;
+  }
+  .progress-wrap{
+    width:100%; height:8px; background:var(--sec); border-radius:99px; overflow:hidden; margin-top:6px;
+  }
+  .progress-bar{
+    height:100%; background:linear-gradient(90deg,var(--p),var(--acc)); width:0%;
+    transition:width .35s ease;
+  }
+  .progress-label{ font-size:12.5px; color:var(--mute); text-align:right; }
+
+  .card{
+    width:100%; max-width:720px; background:var(--card); border-radius:18px;
+    box-shadow:0 1px 2px rgba(30,20,90,.04), 0 12px 32px rgba(30,20,90,.07);
+    padding:32px; position:relative; overflow:hidden;
+  }
+  .qtype{
+    display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:1.2px;
+    text-transform:uppercase; color:var(--p); background:var(--sec);
+    padding:4px 10px; border-radius:99px; margin-bottom:14px;
+  }
+  .qtext{
+    font-size:19px; font-weight:600; line-height:1.45; margin:0 0 22px; color:var(--ink);
+  }
+  .options{ display:flex; flex-direction:column; gap:10px; }
+  .opt{
+    text-align:left; width:100%; padding:14px 16px; border-radius:12px;
+    border:1.5px solid #E4E1FF; background:#FBFAFF; cursor:pointer;
+    font-family:inherit; font-size:14.5px; color:var(--ink);
+    display:flex; align-items:center; gap:12px; transition:border-color .15s, background .15s;
+  }
+  .opt:hover:not(.locked){ border-color:var(--p); background:#F3F1FF; }
+  .opt .letter{
+    flex:none; width:28px; height:28px; border-radius:50%; background:var(--p);
+    color:#fff; font-weight:700; font-size:12.5px; display:flex; align-items:center; justify-content:center;
+  }
+  .opt.correct{ border-color:var(--ok); background:var(--ok-bg); }
+  .opt.correct .letter{ background:var(--ok); }
+  .opt.incorrect{ border-color:var(--bad); background:var(--bad-bg); }
+  .opt.incorrect .letter{ background:var(--bad); }
+  .opt.locked{ cursor:default; }
+  .opt.dimmed{ opacity:.55; }
+
+  .feedback{
+    margin-top:18px; padding:16px 18px; border-radius:12px; font-size:14px; line-height:1.55;
+    display:none;
+  }
+  .feedback.show{ display:block; }
+  .feedback.ok{ background:var(--ok-bg); color:#1F6B43; border:1px solid #BFEAD3; }
+  .feedback.bad{ background:var(--bad-bg); color:#9C2B2E; border:1px solid #F6C6C7; }
+  .feedback .verdict{ font-weight:700; margin-bottom:4px; display:block; }
+
+  .nextbar{ margin-top:22px; display:flex; justify-content:flex-end; }
+  .btn{
+    font-family:inherit; font-size:14.5px; font-weight:600; border:none; border-radius:10px;
+    padding:12px 22px; cursor:pointer; background:var(--p); color:#fff; transition:background .15s;
+  }
+  .btn:hover{ background:var(--p-dk); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .result{ text-align:center; }
+  .score-ring{
+    width:140px; height:140px; margin:8px auto 20px; border-radius:50%;
+    background:conic-gradient(var(--p) calc(var(--pct)*1%), var(--sec) 0);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .score-ring-inner{
+    width:112px; height:112px; border-radius:50%; background:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .score-num{ font-family:'Source Serif 4',Georgia,serif; font-size:30px; font-weight:700; color:var(--p-dk); }
+  .score-den{ font-size:12.5px; color:var(--mute); }
+  .result-msg{ font-size:15.5px; color:var(--ink); max-width:480px; margin:0 auto 22px; line-height:1.55; }
+  .result-actions{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+  .footer-note{
+    max-width:720px; text-align:center; color:var(--mute); font-size:12.5px; margin-top:22px; line-height:1.5;
+  }
+  @media (max-width:480px){ .card{ padding:22px 18px; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Review: Neural Networks &amp; Deep Learning</h1>
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="progress-label" id="progressLabel">Question 1 of 30</div>
+</div>
+
+<div class="card" id="card"></div>
+
+<div class="footer-note">This is a practice tool for your own review. It is not connected to Canvas and your answers here are not recorded or graded.</div>
+
+<script>
+const QUESTIONS = [
+  {
+    type: "Multiple Choice",
+    q: "What is the best way to describe a single artificial neuron?",
+    options: ["An exact digital copy of a human brain cell", "A tiny calculator that weighs inputs and passes a signal forward", "A fixed rule written by a programmer", "A type of computer processor"],
+    correct: 1,
+    okMsg: "Exactly. One neuron is simple \u2014 it weighs a few inputs and passes a signal on. The power comes from stacking many of them together.",
+    badMsg: "A single neuron is actually simple: it's just a small calculator that weighs inputs and passes a signal forward. It's not a literal brain cell or a fixed rule."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Which layer of a neural network is where raw data first enters?",
+    options: ["The output layer", "The hidden layer", "The input layer", "The weight layer"],
+    correct: 2,
+    okMsg: "Right \u2014 the input layer is where each neuron represents one piece of raw information about the example.",
+    badMsg: "That's the input layer's job \u2014 it's where the raw data (like pixels or words) first enters the network."
+  },
+  {
+    type: "Multiple Choice",
+    q: "What happens in the hidden layers of a neural network?",
+    options: ["Nothing \u2014 they're just empty placeholders", "They combine signals from the previous layer into new, more meaningful signals", "They store the final answer", "They only exist in deep learning, never in regular neural networks"],
+    correct: 1,
+    okMsg: "Correct \u2014 hidden layers take signals from the previous layer and combine them into something new and more useful.",
+    badMsg: "Hidden layers do real work: each one combines signals from the previous layer into a new, slightly more meaningful signal."
+  },
+  {
+    type: "Multiple Choice",
+    q: "What comes out of the output layer?",
+    options: ["A raw, unprocessed copy of the input", "The network's final answer \u2014 a category or a number", "A list of all the weights in the network", "Nothing; the hidden layer produces the final answer"],
+    correct: 1,
+    okMsg: "Correct \u2014 the output layer produces the final classification or number, exactly like classification and regression from the ML basics session.",
+    badMsg: "The output layer produces the network's final answer: a category (classification) or a number (regression)."
+  },
+  {
+    type: "Multiple Choice",
+    q: "In a neural network, what does a connection's \u201Cweight\u201D represent?",
+    options: ["The physical size of the neuron", "How much that input matters to the neuron's decision", "The number of layers in the whole network", "The speed of the computer running it"],
+    correct: 1,
+    okMsg: "Correct \u2014 think of a weight like a volume dial: it turns a given input's influence up or down.",
+    badMsg: "A weight represents how much a given input matters \u2014 like a volume dial that can be turned up or down."
+  },
+  {
+    type: "True / False",
+    q: "True or False: A weight of zero means that input has essentially no influence on a neuron's decision.",
+    options: ["True", "False"],
+    correct: 0,
+    okMsg: "Correct \u2014 a weight of zero is like a volume dial turned all the way down to silent for that input.",
+    badMsg: "This is actually true. A weight of zero effectively silences that input's influence on the neuron."
+  },
+  {
+    type: "Multiple Choice",
+    q: "What does \u201Ctraining\u201D a neural network actually mean, mechanically?",
+    options: ["Deleting neurons that seem unnecessary", "Repeatedly adjusting weights until outputs get closer to correct answers", "Manually typing the correct weight for every single connection", "Increasing the number of layers until it works"],
+    correct: 1,
+    okMsg: "Exactly \u2014 training means nudging thousands (or millions) of weights, over and over, until the network's answers improve.",
+    badMsg: "Training means repeatedly adjusting the weights, little by little, until the network's outputs get closer to being correct."
+  },
+  {
+    type: "Multiple Choice",
+    q: "According to IBM's definition, how many layers does a network need to be considered \u201Cdeep learning\u201D?",
+    options: ["At least 1", "At least 2", "At least 4", "At least 100"],
+    correct: 2,
+    okMsg: "Correct \u2014 deep learning specifically refers to networks with at least 4 layers, though modern ones are often far deeper.",
+    badMsg: "IBM's definition specifically requires at least 4 layers for a network to count as \u201Cdeep learning.\u201D"
+  },
+  {
+    type: "Multiple Choice",
+    q: "Why does having more hidden layers generally help a network learn more complex patterns?",
+    options: ["More layers make the computer run cooler", "More layers let the network build a hierarchy of increasingly abstract features", "More layers remove the need for training data", "More layers make the network's answers always 100% correct"],
+    correct: 1,
+    okMsg: "Correct \u2014 depth allows simple early patterns to be combined into more specific, abstract ones layer by layer.",
+    badMsg: "More layers let a network build up a hierarchy: simple patterns in early layers get combined into more complex, abstract ones in later layers."
+  },
+  {
+    type: "Multiple Choice",
+    q: "In a classic image-recognition network, what does the very first layer typically detect?",
+    options: ["Whole objects like \u2018cat\u2019 or \u2018car\u2019", "Simple edges and light-to-dark contrasts", "Specific human names", "The exact file size of the image"],
+    correct: 1,
+    okMsg: "Correct \u2014 the earliest layers detect the simplest features, like edges, with nothing recognizable yet.",
+    badMsg: "The first layer usually detects only simple edges and contrasts \u2014 nothing recognizable as an object yet."
+  },
+  {
+    type: "Multiple Choice",
+    q: "In that same image-recognition hierarchy, what do middle layers typically combine edges into?",
+    options: ["Entire finished objects", "Basic shapes like curves and corners", "Random noise", "Text labels"],
+    correct: 1,
+    okMsg: "Correct \u2014 middle layers combine simple edges into basic shapes, textures, and curves.",
+    badMsg: "Middle layers combine those simple edges into basic shapes \u2014 curves, corners, textures."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Later layers in an image-recognition network tend to combine shapes into:",
+    options: ["Recognizable parts, like an eye or a wheel", "Nothing new \u2014 they just repeat earlier layers", "Raw pixel values only", "Audio signals"],
+    correct: 0,
+    okMsg: "Correct \u2014 by this point the network is combining shapes into recognizable parts of an object.",
+    badMsg: "Later layers combine shapes into actual recognizable parts, like an eye, an ear, or a wheel."
+  },
+  {
+    type: "True / False",
+    q: "True or False: A human engineer has to manually program the rule \u201Cthis pattern of pixels equals an ear\u201D for the network to recognize it.",
+    options: ["True", "False"],
+    correct: 1,
+    okMsg: "Correct \u2014 the network discovers this entire hierarchy on its own, from labeled examples, without anyone hand-coding it.",
+    badMsg: "Actually false. Nobody manually codes that rule \u2014 the network discovers the whole hierarchy on its own from labeled training examples."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Which historical event is credited with igniting the modern deep learning boom?",
+    options: ["Deep Blue defeating Kasparov in 1997", "AlexNet winning the ImageNet competition in 2012", "The invention of the calculator", "The founding of the internet"],
+    correct: 1,
+    okMsg: "Correct \u2014 AlexNet's dramatic 2012 win is widely seen as the moment deep learning became the dominant approach in AI.",
+    badMsg: "That was AlexNet's 2012 ImageNet win \u2014 Deep Blue (1997) was rule-based search, not deep learning."
+  },
+  {
+    type: "Multiple Choice",
+    q: "What made the 2017 \u201CAttention Is All You Need\u201D paper so influential?",
+    options: ["It introduced the Transformer architecture, a new way for networks to understand language", "It proved neural networks don't need training data", "It was the first paper to mention the word \u2018algorithm\u2019", "It introduced the concept of a neuron"],
+    correct: 0,
+    okMsg: "Correct \u2014 the Transformer's attention mechanism became the backbone of virtually every modern chatbot, including ChatGPT.",
+    badMsg: "That paper introduced the Transformer architecture and its \u201Cattention\u201D mechanism \u2014 the backbone of tools like ChatGPT today."
+  },
+  {
+    type: "Multiple Choice",
+    q: "ChatGPT is built on which underlying architecture?",
+    options: ["A rule-based expert system", "A Transformer-based deep neural network", "A simple linear regression model", "A basic if-then decision tree"],
+    correct: 1,
+    okMsg: "Correct \u2014 the \u2018T\u2019 in GPT literally stands for Transformer.",
+    badMsg: "ChatGPT runs on a Transformer-based deep neural network \u2014 in fact, the \u2018T\u2019 in GPT stands for Transformer."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Which of these is a real-world application of deep neural networks today?",
+    options: ["A vending machine dispensing a fixed item when a button is pressed", "Self-driving car software identifying pedestrians from camera footage", "A calculator computing a fixed formula", "A thermostat switching on below a set temperature"],
+    correct: 1,
+    okMsg: "Correct \u2014 self-driving vision systems rely heavily on deep neural networks trained on huge amounts of image data.",
+    badMsg: "The self-driving car example is the deep learning one \u2014 the other three are simple rule-based systems with no learning involved."
+  },
+  {
+    type: "Multiple Choice",
+    q: "In the TensorFlow Playground demo, what does the colored \u201Cdecision boundary\u201D on screen represent?",
+    options: ["The exact number of neurons in the network", "The network's current answer to \u2018which category does this point belong to\u2019", "The speed of the internet connection", "A random visual effect with no real meaning"],
+    correct: 1,
+    okMsg: "Correct \u2014 the decision boundary is a live visual of the network's current classification output, reshaping as it trains.",
+    badMsg: "That colored boundary is literally the network's current answer to \u2018which category does this point belong to,\u2019 updating live as it learns."
+  },
+  {
+    type: "True / False",
+    q: "True or False: A network with zero hidden layers can typically draw a decision boundary just as flexible and curvy as one with several hidden layers.",
+    options: ["True", "False"],
+    correct: 1,
+    okMsg: "Correct \u2014 without hidden layers, a network can usually only draw simple, straight-ish boundaries.",
+    badMsg: "This is false. Without hidden layers, a network is generally limited to simple, straight-ish boundaries \u2014 it needs hidden layers to draw curvy, complex ones."
+  },
+  {
+    type: "Multiple Choice",
+    q: "What happened when hidden layers were added to help separate a spiral-shaped dataset in the Playground demo?",
+    options: ["Nothing changed at all", "The boundary became more flexible and could curve around the spiral", "The dataset disappeared", "The network stopped training entirely"],
+    correct: 1,
+    okMsg: "Correct \u2014 more layers gave the network the capacity to draw a much more flexible, curved boundary.",
+    badMsg: "Adding hidden layers let the boundary become more flexible, curving around the spiral shape instead of staying straight."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Which best defines a neural network overall?",
+    options: ["A fixed set of if-then rules written by a human", "A model that stacks simple \u2018neurons\u2019 in layers and learns connections from data", "A type of computer monitor", "A search engine ranking algorithm only"],
+    correct: 1,
+    okMsg: "Correct \u2014 that's the full definition: simple neurons, stacked in layers, learning pattern-recognizing connections from data.",
+    badMsg: "A neural network is a model that stacks simple \u2018neurons\u2019 in layers and learns pattern-recognizing connections from data \u2014 not a fixed rule set."
+  },
+  {
+    type: "Multiple Choice",
+    q: "What determines whether a network counts as \u201Cdeep,\u201D according to what was covered this week?",
+    options: ["The number of neurons in a single layer", "The number of layers (at least 4)", "The brand of computer running it", "Whether it uses a webcam"],
+    correct: 1,
+    okMsg: "Correct \u2014 it's specifically the layer count, not the neuron count within one layer, that defines \u2018deep.\u2019",
+    badMsg: "It's the number of layers (at least 4) that defines \u2018deep,\u2019 not how many neurons sit inside a single layer."
+  },
+  {
+    type: "True / False",
+    q: "True or False: A single neuron, on its own, can typically perform complex tasks like recognizing a face.",
+    options: ["True", "False"],
+    correct: 1,
+    okMsg: "Correct \u2014 the real power comes from combining thousands of simple neurons together, not from any single one.",
+    badMsg: "This is false. One neuron by itself can barely do anything interesting \u2014 the power comes from stacking many together."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Neural networks are best described as sitting where in the AI/ML/DL relationship?",
+    options: ["Completely outside of AI and machine learning", "The structure that deep learning is built from, inside the machine learning and AI \u2018circles\u2019", "A replacement for machine learning entirely", "Only used in unsupervised learning, never supervised"],
+    correct: 1,
+    okMsg: "Correct \u2014 neural networks are the innermost structure, used by deep learning, which sits inside machine learning, which sits inside AI.",
+    badMsg: "Neural networks are the structure deep learning is built from \u2014 they sit inside the nested AI \u2192 ML \u2192 DL relationship, not outside it."
+  },
+  {
+    type: "True / False",
+    q: "True or False: One hidden layer is already enough for a network to officially count as \u201Cdeep learning.\u201D",
+    options: ["True", "False"],
+    correct: 1,
+    okMsg: "Correct \u2014 the threshold covered this week is at least 4 layers total, not just one hidden layer.",
+    badMsg: "False \u2014 the threshold is at least 4 layers total. A single hidden layer is not enough to count as \u2018deep.\u2019"
+  },
+  {
+    type: "True / False",
+    q: "True or False: A network's weights typically start out already correct and never need to change.",
+    options: ["True", "False"],
+    correct: 1,
+    okMsg: "Correct \u2014 weights usually start close to random and get nudged into place during training.",
+    badMsg: "False \u2014 weights usually start out close to random, and training is exactly the process of nudging them toward useful values."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Which of these is closest to what a voice assistant's underlying technology relies on?",
+    options: ["A fixed lookup table of every possible sentence", "Deep neural networks trained on large amounts of speech and language data", "A simple calculator", "A single artificial neuron with no layers"],
+    correct: 1,
+    okMsg: "Correct \u2014 voice assistants rely on deep neural networks trained on huge datasets of speech and language.",
+    badMsg: "Voice assistants rely on deep neural networks trained on large amounts of speech and language data \u2014 not a fixed lookup table."
+  },
+  {
+    type: "Multiple Choice",
+    q: "What's the relationship between layers and the network's ability to generalize to new, unseen inputs?",
+    options: ["Layers have nothing to do with generalization", "More appropriate depth can help a network learn patterns general enough to handle new inputs, not just memorized ones", "Only the output layer affects generalization", "Fewer layers always generalize better, with no exceptions"],
+    correct: 1,
+    okMsg: "Correct \u2014 the right depth helps a network learn a real pattern, not just memorize the exact training examples.",
+    badMsg: "The right amount of depth helps a network learn patterns general enough to handle new inputs, rather than only memorizing what it already saw."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Why is the Playground demo's spiral dataset a good test of a network's capability?",
+    options: ["Because spirals are easy for any network, deep or not", "Because separating a spiral shape requires a flexible, curved boundary that simple networks struggle to draw", "Because it tests the computer's internet speed", "Because it removes the need for any training at all"],
+    correct: 1,
+    okMsg: "Correct \u2014 the spiral requires a genuinely flexible, curved boundary, which is exactly what extra hidden layers make possible.",
+    badMsg: "The spiral is a good test because separating it requires a flexible, curved boundary \u2014 something simple networks without enough layers struggle to draw."
+  },
+  {
+    type: "Multiple Choice",
+    q: "Overall, what is the single biggest idea to take away from this week's content?",
+    options: ["Neural networks are too complicated for anyone outside computer science to understand", "Simple building blocks (neurons and weights), stacked in layers, can learn surprisingly complex patterns from data", "Deep learning always requires writing code by hand", "Neural networks and rule-based systems are the exact same thing"],
+    correct: 1,
+    okMsg: "Exactly right \u2014 that's the whole idea in one sentence: simple pieces, stacked and trained, add up to something powerful.",
+    badMsg: "The big idea is that simple building blocks \u2014 neurons and weights \u2014 stacked in layers and trained on data, can learn surprisingly complex patterns."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+const card = document.getElementById('card');
+const progressBar = document.getElementById('progressBar');
+const progressLabel = document.getElementById('progressLabel');
+
+function letterFor(i){ return String.fromCharCode(65+i); }
+
+function renderQuestion(){
+  answered = false;
+  const item = QUESTIONS[current];
+  progressBar.style.width = ((current)/QUESTIONS.length*100) + '%';
+  progressLabel.textContent = `Question ${current+1} of ${QUESTIONS.length}`;
+
+  let html = `<span class="qtype">${item.type}</span>`;
+  html += `<p class="qtext">${item.q}</p>`;
+  html += `<div class="options" id="options">`;
+  item.options.forEach((opt,i)=>{
+    html += `<button class="opt" data-i="${i}"><span class="letter">${letterFor(i)}</span><span>${opt}</span></button>`;
+  });
+  html += `</div>`;
+  html += `<div class="feedback" id="feedback"></div>`;
+  html += `<div class="nextbar"><button class="btn" id="nextBtn" disabled>${current === QUESTIONS.length-1 ? 'See my results' : 'Next question'}</button></div>`;
+
+  card.innerHTML = html;
+
+  document.querySelectorAll('.opt').forEach(btn=>{
+    btn.addEventListener('click', ()=> selectOption(parseInt(btn.dataset.i)));
+  });
+  document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+}
+
+function selectOption(i){
+  if(answered) return;
+  answered = true;
+  const item = QUESTIONS[current];
+  const opts = document.querySelectorAll('.opt');
+  const isCorrect = i === item.correct;
+  if(isCorrect) score++;
+
+  opts.forEach((btn,idx)=>{
+    btn.classList.add('locked');
+    if(idx === item.correct) btn.classList.add('correct');
+    else if(idx === i) btn.classList.add('incorrect');
+    else btn.classList.add('dimmed');
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.classList.add('show', isCorrect ? 'ok' : 'bad');
+  fb.innerHTML = `<span class="verdict">${isCorrect ? '\u2713 Correct' : '\u2717 Not quite'}</span>${isCorrect ? item.okMsg : item.badMsg}`;
+
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion(){
+  if(current < QUESTIONS.length - 1){
+    current++;
+    renderQuestion();
+  } else {
+    renderResult();
+  }
+}
+
+function renderResult(){
+  progressBar.style.width = '100%';
+  progressLabel.textContent = `Finished \u2014 ${QUESTIONS.length} of ${QUESTIONS.length}`;
+  const pct = Math.round((score/QUESTIONS.length)*100);
+
+  let msg;
+  if(pct >= 90) msg = "Excellent \u2014 you clearly understand neurons, layers, weights, and depth. You're in great shape on this material.";
+  else if(pct >= 70) msg = "Solid work. Skim back over whichever questions tripped you up, especially the layer hierarchy and the Playground demo concepts.";
+  else if(pct >= 50) msg = "You're partway there. Revisit the three-layer structure, what makes learning \u2018deep,\u2019 and the image-hierarchy example before moving on.";
+  else msg = "This concept takes a couple passes. Go back through the neural network slides section by section \u2014 especially neurons, weights, and layers \u2014 then try this review again.";
+
+  card.innerHTML = `
+    <div class="result">
+      <span class="qtype">Review Complete</span>
+      <div class="score-ring" style="--pct:${pct}">
+        <div class="score-ring-inner">
+          <div class="score-num">${score}/${QUESTIONS.length}</div>
+          <div class="score-den">${pct}%</div>
+        </div>
+      </div>
+      <p class="result-msg">${msg}</p>
+      <div class="result-actions">
+        <button class="btn" id="restartBtn">Try again</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('restartBtn').addEventListener('click', ()=>{
+    current = 0; score = 0; renderQuestion();
+  });
+}
+
+renderQuestion();
+</script>
+
+</body>
+</html>
